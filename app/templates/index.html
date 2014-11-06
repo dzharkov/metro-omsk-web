@@ -1,4 +1,71 @@
 {% extends "base.html" %}
+{% block additional_head %}
+
+    <style type="text/css">
+        #metro-map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /*noinspection CssUnusedSymbol*/
+        .line {
+            fill: none;
+            stroke: black;
+            stroke-width: 3
+        }
+
+        /*noinspection CssUnusedSymbol*/
+        .station {
+            fill: red;
+            stroke: red;
+            cursor: pointer;
+        }
+    </style>
+    <script type="application/javascript">
+        function toScreenCoordinates(a, svg) {
+            var multiplier = Math.min($(svg).height(), $(svg).width());
+            return Math.ceil(a * 0.8 * multiplier) + multiplier * 0.1
+        }
+        function drawLine(svg, line) {
+            svg = $(svg);
+            //noinspection JSUnresolvedVariable
+            var stations = line.stations;
+            stations.forEach(function (station) {
+                station.x = toScreenCoordinates(station.x, svg);
+                station.y = toScreenCoordinates(1 - station.y, svg);
+            });
+            svg.append(
+                    $('<polyline>').addClass('line').attr('points', stations.map(function (station) {
+                        return station.x + ',' + station.y;
+                    }).join(' '))
+            );
+            stations.forEach(function (station) {
+                var circle = $('<circle>').addClass('station').attr({
+                    cx: station.x,
+                    cy: station.y,
+                    r: 10
+                });
+                svg.append(circle)
+            });
+        }
+        var cityId = {{ city.id }};
+        $(document).ready(function () {
+            var svg = $('#metro-map');
+            var drawLineSvg = function (line) {
+                drawLine(svg, line)
+            };
+
+            $.ajax('/backend/' + cityId).done(function (city) {
+                console.log(city);
+                //noinspection JSUnresolvedVariable
+                city.lines.forEach(drawLineSvg);
+                //noinspection JSJQueryEfficiency
+                $("body").html($("body").html());
+            });
+
+        })
+    </script>
+{% endblock %}
 {% block content %}
-    <h1>ololo</h1>
+    <svg id="metro-map" xmlns="http://www.w3.org/2000/svg"></svg>
 {% endblock %}
