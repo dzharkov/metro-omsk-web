@@ -16,18 +16,18 @@ $.fn.serializeObject = function()
 };
 
 $(document).ready(function() {
-    var markersArray = [];
+    var overlayItems = [];
     var map;
 
     google.maps.Map.prototype.clearOverlays = function() {
-          for (var i = 0; i < markersArray.length; i++ ) {
-            markersArray[i].setMap(null);
+          for (var i = 0; i < overlayItems.length; i++ ) {
+            overlayItems[i].setMap(null);
           }
-          markersArray.length = 0;
+          overlayItems.length = 0;
     };
 
     function createStationMarker(pos, color, station) {
-        markersArray.push(new MarkerWithLabel({
+        overlayItems.push(new MarkerWithLabel({
             position: pos,
             map: map,
             labelContent: station.name,
@@ -41,7 +41,7 @@ $(document).ready(function() {
             }
         }));
 
-        return markersArray[markersArray.length - 1];
+        return overlayItems[overlayItems.length - 1];
     }
 
     var model = {
@@ -73,7 +73,6 @@ $(document).ready(function() {
                             };
                             $.post('/backend/update_coords/' + station.id, data).done(
                                 function () {
-                                    linePath.setMap(null);
                                     model.loadData();
                                 }
                             );
@@ -88,6 +87,7 @@ $(document).ready(function() {
                         strokeOpacity: 1.0,
                         strokeWeight: 2
                     });
+                    overlayItems.push(linePath);
                     linePath.setMap(map);
                 });
             });
@@ -99,8 +99,8 @@ $(document).ready(function() {
 
             var form = modalDiv.find('form');
             form.find('.js-cancel').click(function() { modalDiv.modal('hide'); });
-            form.find('#name').attr('value', station.name || '');
-            form.find('#next_time').attr('value', station.next_time || '');
+            form.find('#name').val( station.name || '');
+            form.find('#next_time').val( station.next_time || '');
 
             var lines = form.find('#line');
             lines.html('');

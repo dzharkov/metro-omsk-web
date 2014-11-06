@@ -29,9 +29,15 @@ def update_station(station, request):
         prev_stations = Station.objects.filter(line=station.line, next_station__isnull=True).all()
         prev_station = None if len(prev_stations) == 0 else prev_stations[0]
 
+    need_update_prev = prev_station is not None and prev_station.id != station.id
+
+    if need_update_prev:
+        prev_station.next_station = None
+        prev_station.save()
+
     station.save()
 
-    if prev_station is not None and prev_station.id != station.id:
+    if need_update_prev:
         prev_station.next_station = station
         prev_station.save()
 
