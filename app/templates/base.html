@@ -1,0 +1,15 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Index{% endblock %}</title>
+    {% include "head.html" %}
+    {% block additional_head %}{% endblock %}
+    <style type="text/css">
+        {% block additional_styles %}{% endblock %}
+    </style>
+</head>
+<body>
+{% block content %}{% endblock %}
+</body>
+</html>
