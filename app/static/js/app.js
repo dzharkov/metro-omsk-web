@@ -39,6 +39,8 @@ $(document).ready(function() {
                 strokeColor: color
             }
         }));
+
+        return markersArray[markersArray.length - 1];
     }
 
     var model = {
@@ -54,8 +56,14 @@ $(document).ready(function() {
                 _.each(data.lines, function(line) {
                     var lineArray = [];
                     _.each(line.stations, function(station) {
+                        station.line_id = line.id;
                         var myLatLng = new google.maps.LatLng(station.lat, station.lng);
-                        createStationMarker(myLatLng, line.color, station);
+                        var marker = createStationMarker(myLatLng, line.color, station);
+                        google.maps.event.addListener(marker, 'rightclick', function(mouseEvent){
+                            model.currentStation = station;
+                            $('.context-menu-marker').contextMenu(mouseEvent.pixel);
+                        });
+
                         lineArray.push(myLatLng);
                     });
                     var linePath = new google.maps.Polyline({
@@ -69,19 +77,15 @@ $(document).ready(function() {
                 });
             });
         },
-        createLatLng: null
-    };
-
-    $.contextMenu({
-        selector: '.context-menu-one',
-        trigger: 'none',
-        callback: function(key, options) {
-            //dialog.dialog( "open" );
+        openStationForm: function(station) {
+            station = station || {};
             var modalDiv = $('#create-station-modal');
             modalDiv.modal({show:true});
 
             var form = modalDiv.find('form');
             form.find('.js-cancel').click(function() { modalDiv.modal('hide'); });
+            form.find('#name').attr('value', station.name || '');
+            form.find('#next_time').attr('value', station.next_time || '');
 
             var lines = form.find('#line');
             lines.html('');
@@ -93,17 +97,24 @@ $(document).ready(function() {
                 stations.html('');
                 var line = model.lineById(lineId);
 
-                _.each(line.stations, function(s) {
-                    stations.append($('<option>', { value: s.id, text: s.name }));
-                });
-
                 stations.append($('<option>', { value: '', text: 'Добавить последней' }));
+                _.each(line.stations, function(s) {
+                    var desc = { value: s.id, text: s.name };
+                    if (station.next_station_id == s.id) {
+                        desc.selected = "selected";
+                    }
+                    stations.append($('<option>', desc));
+                });
             }
 
             lines.change(filterStations);
-
+            var lineId = station.line_id || -1;
             _.each(model.data.lines, function(l) {
-               lines.append($('<option>', { value: l.id, text: l.name }));
+                var desc = { value: l.id, text: l.name };
+                if (l.id == lineId) {
+                    desc.selected = "selected";
+                }
+                lines.append($('<option>', desc));
             });
 
             filterStations();
@@ -112,18 +123,43 @@ $(document).ready(function() {
             form.submit(function(event) {
                 var data = $(this).serializeObject();
 
-                data.lan = model.createLatLng.B;
-                data.lat = model.createLatLng.k;
+                data.ln = station.lng || model.createLatLng.B;
+                data.lt = station.lat || model.createLatLng.k;
 
-                $.post('/backend/add_station', data).done(function() {
+                var url = '/backend/add_station';
+                if (station.id) {
+                    url = '/backend/edit_station/' + station.id;
+                }
+
+                $.post(url, data).done(function() {
                     modalDiv.modal('hide');
                     model.loadData();
                 });
                 return false;
             });
         },
+        createLatLng: null
+    };
+
+    $.contextMenu({
+        selector: '.context-menu-1',
+        trigger: 'none',
+        callback: function(key, options) {
+            model.openStationForm();
+        },
         items: {
             "add": {name: "Add station", icon: "add"}
+        }
+    });
+
+    $.contextMenu({
+        selector: '.context-menu-marker',
+        trigger: 'none',
+        callback: function(key, options) {
+            model.openStationForm(model.currentStation)
+        },
+        items: {
+            "edit": {name: "Edit", icon: "edit"}
         }
     });
 
@@ -139,7 +175,7 @@ $(document).ready(function() {
         model.loadData();
 
         google.maps.event.addListener(map, 'rightclick', function(mouseEvent){
-            $('.context-menu-one').contextMenu(mouseEvent.pixel);
+            $('.context-menu-1').contextMenu(mouseEvent.pixel);
             model.createLatLng = mouseEvent.latLng;
             map.setOptions({ draggableCursor: 'pointer' });
         });
