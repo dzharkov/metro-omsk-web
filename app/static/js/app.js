@@ -31,6 +31,7 @@ $(document).ready(function() {
             position: pos,
             map: map,
             labelContent: station.name,
+            draggable:true,
             icon: {
                 path: google.maps.SymbolPath.CIRCLE,
                 scale: 3,
@@ -55,18 +56,32 @@ $(document).ready(function() {
 
                 _.each(data.lines, function(line) {
                     var lineArray = [];
+                    var linePath;
                     _.each(line.stations, function(station) {
                         station.line_id = line.id;
                         var myLatLng = new google.maps.LatLng(station.lat, station.lng);
                         var marker = createStationMarker(myLatLng, line.color, station);
-                        google.maps.event.addListener(marker, 'rightclick', function(mouseEvent){
+                        google.maps.event.addListener(marker, 'rightclick', function(mouseEvent) {
                             model.currentStation = station;
                             $('.context-menu-marker').contextMenu(mouseEvent.pixel);
                         });
 
+                        google.maps.event.addListener(marker, 'dragend', function(mouseEvent) {
+                            var data = {
+                                ln: mouseEvent.latLng.B,
+                                lt: mouseEvent.latLng.k
+                            };
+                            $.post('/backend/update_coords/' + station.id, data).done(
+                                function () {
+                                    linePath.setMap(null);
+                                    model.loadData();
+                                }
+                            );
+                        });
+
                         lineArray.push(myLatLng);
                     });
-                    var linePath = new google.maps.Polyline({
+                    linePath = new google.maps.Polyline({
                         path: lineArray,
                         geodesic: true,
                         strokeColor: line.color,

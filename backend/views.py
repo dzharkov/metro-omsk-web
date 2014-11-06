@@ -1,4 +1,5 @@
 from annoying.decorators import ajax_request
+from django.views.decorators.csrf import csrf_exempt
 from app.models import City, Station, Line
 
 
@@ -45,5 +46,16 @@ def add_station(request):
 def edit_station(request, id):
     station = Station.objects.get(id=id)
     update_station(station, request)
+
+    return {'result': 1}
+
+
+@csrf_exempt
+@ajax_request
+def update_coords(request, id):
+    station = Station.objects.get(id=id)
+    station.lt_coord = request.POST['lt']
+    station.ln_coord = request.POST['ln']
+    station.save()
 
     return {'result': 1}
