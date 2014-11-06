@@ -76,7 +76,8 @@ class Station(models.Model):
         return {
             'id': self.id,
             'name': self.name,
-            'coords': str(self.x_coord) + "," + str(self.y_coord),
+            'x': self.x_coord,
+            'y': self.y_coord,
             'next_station_id': self.next_station.id if self.next_station is not None else None,
             'next_time': self.next_time,
             'prev_time': self.prev_time,
