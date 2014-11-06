@@ -39,7 +39,7 @@ class Line(models.Model):
         return {
             'id': self.id,
             'name': self.name,
-            'color': self.color,
+            'color': '#FF0000' if self.id == 1 else '#00FF00',
             'stations': array_as_dict(self.ordered_stations)
         }
 
