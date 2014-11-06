@@ -2,6 +2,8 @@
 {% block title %}Simple icons{% endblock %}
 {% block additional_head %}
     {% load staticfiles %}
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDQpdKHgY0iS3w9nTE6F5625LwZi2zBFY0&v=3.exp"></script>
+    <script src="{% static "js/app.js" %}"></script>
     <script src="{% static "js/markerwithlabel.js" %}"></script>
     <style type="text/css">
         html, body, #map-canvas {
