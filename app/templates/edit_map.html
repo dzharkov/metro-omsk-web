@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Simple icons{% endblock %}
-{% block additional_head %}
+{% block additional_head %}]
+    {% load staticfiles %}
+    <script src="{% static "js/markerwithlabel.js" %}"></script>
     <style type="text/css">
         html, body, #map-canvas {
             height: 100%;
