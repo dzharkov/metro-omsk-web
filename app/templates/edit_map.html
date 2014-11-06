@@ -1,0 +1,89 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Simple icons</title>
+    <style>
+      html, body, #map-canvas {
+        height: 100%;
+        margin: 0px;
+        padding: 0px
+      }
+      .map-info-window {
+        width:200px;
+        height:200px;
+      }
+    </style>
+    <script src="{% static "js/jquery-2.1.1.js" %}"></script>
+    <script src="{% static "js/underscore.js" %}"></script>
+   {% comment %} <script src="{% static "js/jquery-ui.js" %}"></script>
+   {% endcomment %} <script src="{% static "js/jquery.ui.position.js" %}"></script>
+    <script src="{% static "js/jquery.contextMenu.js" %}"></script>
+    <script src="{% static "js/app.js" %}"></script>
+    <script src="{% static "js/bootstrap.js" %}"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDQpdKHgY0iS3w9nTE6F5625LwZi2zBFY0&v=3.exp"></script>
+
+    <link href="{%  static "css/jquery-ui.css" %}" rel="stylesheet" type="text/css" />
+    <link href="{%  static "css/jquery-ui.structure.css" %}" rel="stylesheet" type="text/css" />
+    <link href="{%  static "css/jquery-ui.theme.css" %}" rel="stylesheet" type="text/css" />
+
+    <link href="{%  static "css/bootstrap.min.css" %}" rel="stylesheet" media="screen">
+    <link href="{%  static "css/jquery.contextMenu.css" %}" rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+  <div id="create-station-modal" class="modal hide fade" tabindex="-1" role="dialog">
+      <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">×</button>
+          <h3>Добавить станцию</h3>
+      </div>
+      <div class="modal-body">
+          <form class="form-horizontal">
+              {% csrf_token %}
+              <div class="control-group">
+                  <label class="control-label" for="name">Название</label>
+
+                  <div class="controls">
+                      <input type="text" id="name" name="name">
+                  </div>
+              </div>
+              <div class="control-group">
+                  <label class="control-label" for="line">Ветка</label>
+
+                  <div class="controls">
+                      <select id="line" name="line">
+                          <option value="1">Красная</option>
+                      </select>
+                  </div>
+              </div>
+              <div class="control-group">
+                  <label class="control-label" for="next_id">Перед станцией</label>
+
+                  <div class="controls">
+                      <select id="next_id" name="next_id">
+
+                      </select>
+                  </div>
+              </div>
+              <div class="control-group">
+                  <label class="control-label" for="next_time" >Время переезда до следующей</label>
+
+                  <div class="controls">
+                      <input type="text" id="next_time" name="next_time">
+                  </div>
+              </div>
+              <div class="control-group">
+                  <div class="controls">
+                      <button type="submit" class="btn btn-primary">Добавить</button>
+                      <button type="button" class="btn js-cancel">Отменить</button>
+                  </div>
+              </div>
+          </form>
+      </div>
+  </div>
+    <div class="context-menu-one box menu-1" style="display: none"></div>
+    <input type="hidden" id="city-id" value="{{ id }}">
+    <div id="map-canvas"></div>
+  </body>
+</html>
