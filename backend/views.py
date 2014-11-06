@@ -79,3 +79,18 @@ def get_cities(request):
         })
 
     return {'cities': cities}
+
+@csrf_exempt
+@ajax_request
+def delete_station(request, id):
+    station = Station.objects.get(id=id)
+    prev = station.prev_station if hasattr(station, 'prev_station') else None
+    next = station.next_station
+
+    station.delete()
+
+    if prev is not None:
+        prev.next_station = next
+        prev.save()
+
+    return {'result': 1}
