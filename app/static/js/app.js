@@ -61,9 +61,14 @@ $(document).ready(function() {
                         station.line_id = line.id;
                         var myLatLng = new google.maps.LatLng(station.lat, station.lng);
                         var marker = createStationMarker(myLatLng, line.color, station);
-                        google.maps.event.addListener(marker, 'rightclick', function(mouseEvent) {
+                        google.maps.event.addListener(marker, 'rightclick', function() {
+                            overlay = new google.maps.OverlayView();
+                            overlay.draw = function() {};
+                            overlay.setMap(map);
+                            var point = overlay.getProjection().fromLatLngToContainerPixel(marker.position);
+
                             model.currentStation = station;
-                            $('.context-menu-marker').contextMenu(mouseEvent.pixel);
+                            $('.context-menu-marker').contextMenu(point);
                         });
 
                         google.maps.event.addListener(marker, 'dragend', function(mouseEvent) {
@@ -153,6 +158,12 @@ $(document).ready(function() {
                 return false;
             });
         },
+        removeStation: function(station) {
+            var url = '/backend/delete_station/' + station.id;
+
+            $.post(url).done(function() { model.loadData(); });
+
+        },
         createLatLng: null
     };
 
@@ -171,10 +182,15 @@ $(document).ready(function() {
         selector: '.context-menu-marker',
         trigger: 'none',
         callback: function(key, options) {
-            model.openStationForm(model.currentStation)
+            if (key == "edit") {
+                model.openStationForm(model.currentStation);
+            } else {
+                model.removeStation(model.currentStation);
+            }
         },
         items: {
-            "edit": {name: "Edit", icon: "edit"}
+            "edit": {name: "Edit", icon: "edit"},
+            "delete": {name: "Delete", icon: "delete"}
         }
     });
 

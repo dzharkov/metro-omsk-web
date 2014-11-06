@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import SET_NULL
 
 
 def as_dict(o):
@@ -63,7 +64,7 @@ class Line(models.Model):
 class Station(models.Model):
     line = models.ForeignKey(Line, related_name='stations', null=False, blank=False)
     name = models.CharField(max_length=100)
-    next_station = models.OneToOneField('self', related_name="prev_station", null=True, blank=True)
+    next_station = models.OneToOneField('self', related_name="prev_station", null=True, blank=True, on_delete=SET_NULL)
     prev_time = models.IntegerField(null=True, blank=True)
     next_time = models.IntegerField(null=True, blank=True)
     x_coord = models.FloatField()
