@@ -4,6 +4,7 @@ from django.db import models
 def as_dict(o):
     return o.as_dict()
 
+
 def array_as_dict(a):
     return list(map(lambda x: x.as_dict(), a))
 
@@ -63,8 +64,8 @@ class Station(models.Model):
     next_station = models.OneToOneField('self', related_name="prev_station", null=True, blank=True)
     prev_time = models.IntegerField(null=True, blank=True)
     next_time = models.IntegerField(null=True, blank=True)
-    x_coord = models.IntegerField()
-    y_coord = models.IntegerField()
+    x_coord = models.FloatField()
+    y_coord = models.FloatField()
     lt_coord = models.FloatField(default=0)
     ln_coord = models.FloatField(default=0)
 
@@ -82,6 +83,24 @@ class Station(models.Model):
             'lat': self.lt_coord,
             'lng': self.ln_coord
         }
+
+    def save(self, **kwargs):
+        super(Station, self).save(kwargs)
+        stations = Station.objects.filter(line__city=self.line.city)
+
+        lt_comparator = lambda a: a.lt_coord
+        lg_comparator = lambda a: a.ln_coord
+
+        top = min(stations, key=lt_comparator).lt_coord
+        bottom = max(stations, key=lt_comparator).lt_coord
+        left = min(stations, key=lg_comparator).ln_coord
+        right = max(stations, key=lg_comparator).ln_coord
+
+        delta_x, delta_y = right - left, bottom - top
+
+        for station in stations:
+            station.x_coord, station.y_coord = (station.ln_coord - left) / delta_x, (station.lt_coord - top) / delta_y
+            super(Station, station).save()
 
 
 class Transition(models.Model):

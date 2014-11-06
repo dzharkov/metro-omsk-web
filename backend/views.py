@@ -1,12 +1,13 @@
 from annoying.decorators import ajax_request
-from django.views.decorators.csrf import csrf_exempt
 from app.models import City, Station, Line
+from django.views.decorators.csrf import csrf_exempt
 
 
 @ajax_request
 def get_card(request, city_id):
     city = City.objects.get(id=city_id)
     return city.as_dict()
+
 
 def update_station(station, request):
     station.name = request.POST['name']
@@ -34,6 +35,7 @@ def update_station(station, request):
         prev_station.next_station = station
         prev_station.save()
 
+
 @ajax_request
 def add_station(request):
     station = Station()
@@ -41,6 +43,7 @@ def add_station(request):
     update_station(station, request)
 
     return {'result': 1}
+
 
 @ajax_request
 def edit_station(request, id):
