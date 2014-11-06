@@ -26,16 +26,17 @@ $(document).ready(function() {
           markersArray.length = 0;
     };
 
-    function createStationMarker(pos) {
-        markersArray.push(new google.maps.Marker({
+    function createStationMarker(pos, color, station) {
+        markersArray.push(new MarkerWithLabel({
             position: pos,
             map: map,
+            labelContent: station.name,
             icon: {
                 path: google.maps.SymbolPath.CIRCLE,
-                scale: 5,
+                scale: 3,
                 fillOpacity: 1,
-                fillColor: '#FF0000',
-                strokeColor: '#FF0000'
+                fillColor: color,
+                strokeColor: color
             }
         }));
     }
@@ -50,14 +51,22 @@ $(document).ready(function() {
                 map.clearOverlays();
                 model.data = data;
 
-                for (var i in data.lines) {
-                    var line = data.lines[i];
-                    for (var j in line.stations) {
-                        var station = line.stations[j];
+                _.each(data.lines, function(line) {
+                    var lineArray = [];
+                    _.each(line.stations, function(station) {
                         var myLatLng = new google.maps.LatLng(station.lat, station.lng);
-                        createStationMarker(myLatLng);
-                    }
-                }
+                        createStationMarker(myLatLng, line.color, station);
+                        lineArray.push(myLatLng);
+                    });
+                    var linePath = new google.maps.Polyline({
+                        path: lineArray,
+                        geodesic: true,
+                        strokeColor: line.color,
+                        strokeOpacity: 1.0,
+                        strokeWeight: 2
+                    });
+                    linePath.setMap(map);
+                });
             });
         },
         createLatLng: null
