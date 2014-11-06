@@ -33,7 +33,7 @@ class City(models.Model):
 class Line(models.Model):
     city = models.ForeignKey(City, related_name='lines', null=False, blank=False)
     name = models.CharField(max_length=100)
-    color = models.IntegerField()
+    color = models.CharField(max_length=10, default='#FF0000')
 
     def __unicode__(self):
         return self.name
@@ -42,7 +42,7 @@ class Line(models.Model):
         return {
             'id': self.id,
             'name': self.name,
-            'color': '#FF0000' if self.id == 1 else '#00FF00',
+            'color': self.color,
             'stations': array_as_dict(self.ordered_stations)
         }
 
@@ -100,6 +100,9 @@ class Station(models.Model):
         right = max(stations, key=lg_comparator).ln_coord
 
         delta_x, delta_y = right - left, bottom - top
+
+        if delta_x == 0 or delta_y  == 0:
+            return
 
         for station in stations:
             station.x_coord, station.y_coord = (station.ln_coord - left) / delta_x, (station.lt_coord - top) / delta_y
