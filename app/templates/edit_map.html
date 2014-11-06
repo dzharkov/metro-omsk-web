@@ -69,5 +69,7 @@
     <div class="context-menu-1 box menu-1" style="display: none"></div>
     <div class="context-menu-marker box menu-marker" style="display: none"></div>
     <div id="map-canvas"></div>
-    <input type="hidden" id="city-id" value="{{ id }}">
+    <input type="hidden" id="city-id" value="{{ city.id }}">
+    <input type="hidden" id="city-ln" value="{{ city.ln_coord }}">
+    <input type="hidden" id="city-lt" value="{{ city.lt_coord }}">
 {% endblock %}

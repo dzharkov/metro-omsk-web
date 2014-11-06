@@ -68,3 +68,14 @@ def update_coords(request, id):
     station.save()
 
     return {'result': 1}
+
+@ajax_request
+def get_cities(request):
+    cities = []
+    for city in City.objects.all():
+        cities.append({
+            'id': city.id,
+            'name': city.name,
+        })
+
+    return {'cities': cities}

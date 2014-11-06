@@ -179,11 +179,21 @@ $(document).ready(function() {
     });
 
     var cityId = $('#city-id').attr('value');
+    var cityLn = $('#city-ln').attr('value');
+    var cityLt = $('#city-lt').attr('value');
 
     function initializeMap() {
         var mapOptions = {
             zoom: 10,
-            center: new google.maps.LatLng(54.987864, 73.367354)
+            center: new google.maps.LatLng(cityLt, cityLn),
+            styles: [
+                {
+                    featureType: "transit",
+                    stylers: [
+                        { visibility: "off" }
+                    ]
+                }
+            ]
         };
         map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
 

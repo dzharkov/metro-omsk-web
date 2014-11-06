@@ -11,6 +11,8 @@ def array_as_dict(a):
 
 class City(models.Model):
     name = models.CharField(max_length=100)
+    lt_coord = models.FloatField(default=0)
+    ln_coord = models.FloatField(default=0)
 
     def __unicode__(self):
         return self.name
