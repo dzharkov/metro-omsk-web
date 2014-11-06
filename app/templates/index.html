@@ -72,6 +72,13 @@
                 {#                    'xlink:href': '{% static "img/omich.jpg" %}'#}
                 {#                });#}
                 svg.append(circle);
+                var text = $('<text>' + station.name + '</text>').attr({
+                    id: 'stationName' + station.id,
+                    x: station.x + CIRCLE_RADIUS * 1.5,
+                    y: station.y + CIRCLE_RADIUS / 2,
+                    style: 'fill: black'
+                });
+                svg.append(text)
             }
         }
 
@@ -97,11 +104,13 @@
                 //noinspection JSJQueryEfficiency
                 $("body").html($("body").html());
 
-                $('#metro-map').find('circle').popover({
+                var circles = $('#metro-map').find('circle');
+                circles.popover({
                     container: 'body',
                     trigger: 'focus',
                     content: $('.popover-buttons').html(),
-                    html: true
+                    html: true,
+                    placement: 'right'
                 }).on('shown.bs.popover', function () {
                     var $this = $(this);
                     var stationId = $this.data('stationId');
@@ -112,6 +121,10 @@
                     tip.find('.add-destination-button').click(function () {
                         $('#destinationStation').val(stationId);
                     });
+                }).focus(function () {
+                    $('text#stationName' + $(this).data('stationId')).fadeOut();
+                }).focusout(function () {
+                    $('text#stationName' + $(this).data('stationId')).fadeIn();
                 });
                 $('.path-search-container select').change(findPath)
             });
@@ -121,6 +134,8 @@
 {% block content %}
     <svg id="metro-map" xmlns="http://www.w3.org/2000/svg"></svg>
     <div id="path-search-container" role="form">
+        <h3 class="page-header">{{ city.name }}</h3>
+
         <div class="form-group">
             <label for="sourceStation" class="col-sm-2 control-label">Откуда</label>
             <select id="sourceStation" class="form-control">
