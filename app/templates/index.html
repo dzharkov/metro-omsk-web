@@ -12,12 +12,13 @@
         /*noinspection CssUnusedSymbol*/
         .line {
             fill: none;
-            stroke-width: 3
+            stroke-width: 3;
         }
 
         /*noinspection CssUnusedSymbol*/
         .station {
             cursor: pointer;
+            position: relative;
         }
 
         #path-search-container {
@@ -25,36 +26,37 @@
             right: 2em;
             top: 2em
         }
+
+        /*noinspection CssUnusedSymbol*/
+        .transition {
+            stroke: #743500;
+            stroke-width: 4;
+        }
     </style>
     <script type="application/javascript">
         const CITY_ID = parseInt({{ city.id }}) ? {{ city.id }} : -1;
         const CIRCLE_RADIUS = 8;
         {#        const CITY = JSON.parse(decodeURIComponent('{{ city|jsonify }}'));#}
         var CITY = undefined;
+        var STATIONS = undefined;
 
         function toScreenCoordinates(a, svg) {
             var multiplier = Math.min($(svg).height(), $(svg).width());
             return Math.ceil(a * 0.8 * multiplier) + multiplier * 0.1
         }
-        function drawLine(svg, line) {
-            svg = $(svg);
+
+        function drawLine(line) {
             //noinspection JSUnresolvedVariable
-            var stations = line.stations;
-            stations.forEach(function (station) {
-                station.x = toScreenCoordinates(station.x, svg);
-                station.y = toScreenCoordinates(1 - station.y, svg);
-            });
-            svg.append($('<polyline>')
+            this.svg.append($('<polyline>')
                             .addClass('line')
                             .attr('style', 'stroke:' + line.color)
-                            .attr('points', stations.map(function (station) {
+                            .attr('points', line.stations.map(function (station) {
                                 return station.x + ',' + station.y;
                             }).join(' '))
             );
-            console.log(stations);
-            for (var i in stations) {
-                if (!stations.hasOwnProperty(i)) continue;
-                var station = stations[i];
+            for (var i in line.stations) {
+                if (!line.stations.hasOwnProperty(i)) continue;
+                var station = line.stations[i];
                 var circle = $('<circle>').addClass('station').attr({
                     style: 'stroke:' + line.color + ';fill: ' + line.color,
                     cx: station.x,
@@ -71,15 +73,36 @@
                 {#                    height: 15,#}
                 {#                    'xlink:href': '{% static "img/omich.jpg" %}'#}
                 {#                });#}
-                svg.append(circle);
-                var text = $('<text>' + station.name + '</text>').attr({
-                    id: 'stationName' + station.id,
-                    x: station.x + CIRCLE_RADIUS * 1.5,
-                    y: station.y + CIRCLE_RADIUS / 2,
-                    style: 'fill: black'
-                });
-                svg.append(text)
+                this.svg.append(circle);
             }
+        }
+
+        function drawTransition(transition) {
+            var stationFrom = STATIONS.filter(function (e) {
+                return e.id == transition.from_id
+            })[0];
+            console.log(transition);
+            var stationTo = STATIONS.filter(function (e) {
+                return e.id == transition.to_id
+            })[0];
+            var line = $('<line>').attr({
+                x1: stationFrom.x,
+                y1: stationFrom.y,
+                x2: stationTo.x,
+                y2: stationTo.y
+
+            }).addClass('transition');
+            this.svg.append(line);
+        }
+
+        function drawText(station) {
+            var text = $('<text>' + station.name + '</text>').attr({
+                id: 'stationName' + station.id,
+                x: station.x + CIRCLE_RADIUS * 1.5,
+                y: station.y + CIRCLE_RADIUS / 2,
+                style: 'fill: black'
+            });
+            this.svg.append(text)
         }
 
         function findPath() {
@@ -92,20 +115,26 @@
         $(document).ready(function () {
             var svg = $('#metro-map');
 
-            var drawLineSvg = function (line) {
-                drawLine(svg, line)
-            };
-
             $.ajax('/backend/' + CITY_ID).done(function (city) {
                 console.log(city);
+
                 CITY = city;
-                //noinspection JSUnresolvedVariable
-                city.lines.forEach(drawLineSvg);
+                STATIONS = _.flatten(city.lines.map(function (line) {
+                    return line.stations;
+                }));
+                STATIONS.forEach(function (station) {
+                    station.x = toScreenCoordinates(station.x, svg);
+                    station.y = toScreenCoordinates(1 - station.y, svg);
+                });
+
+                city.transitions.forEach(_.bind(drawTransition, {svg: svg}));
+                city.lines.forEach(_.bind(drawLine, {svg: svg}));
+                STATIONS.forEach(_.bind(drawText, {svg: svg}));
+
                 //noinspection JSJQueryEfficiency
                 $("body").html($("body").html());
 
-                var circles = $('#metro-map').find('circle');
-                circles.popover({
+                $('#metro-map').find('circle').popover({
                     container: 'body',
                     trigger: 'focus',
                     content: $('.popover-buttons').html(),
