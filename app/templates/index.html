@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load staticfiles %}
+{#{% load json_filters %}#}
 {% block additional_head %}
 
     <style type="text/css">
@@ -19,13 +20,18 @@
             cursor: pointer;
         }
 
-        #search-container {
+        #path-search-container {
             position: absolute;
             right: 2em;
             top: 2em
         }
     </style>
     <script type="application/javascript">
+        const CITY_ID = parseInt({{ city.id }}) ? {{ city.id }} : -1;
+        const CIRCLE_RADIUS = 8;
+        {#        const CITY = JSON.parse(decodeURIComponent('{{ city|jsonify }}'));#}
+        var CITY = undefined;
+
         function toScreenCoordinates(a, svg) {
             var multiplier = Math.min($(svg).height(), $(svg).width());
             return Math.ceil(a * 0.8 * multiplier) + multiplier * 0.1
@@ -53,41 +59,68 @@
                     style: 'stroke:' + line.color + ';fill: ' + line.color,
                     cx: station.x,
                     cy: station.y,
-                    r: 8
+                    r: CIRCLE_RADIUS,
+                    'data-title': station.name,
+                    'data-station-id': station.id
                 });
-                svg.append(circle);
-                {#                var image = $('<image></image>').addClass('station').attr({#}
+                {#                $(circle).click(handler(station.id));#}
+                {#                circle = $('<image></image>').addClass('station').attr({#}
                 {#                    x: Math.ceil(station.x - 8),#}
                 {#                    y: Math.ceil(station.y - 8),#}
                 {#                    width: 15,#}
                 {#                    height: 15,#}
                 {#                    'xlink:href': '{% static "img/omich.jpg" %}'#}
                 {#                });#}
-                {#                svg.append(image);#}
+                svg.append(circle);
             }
-
         }
-        var cityId = {{ city.id }};
+
+        function findPath() {
+            var sourceId = $('#sourceStation').val(),
+                    destinationId = $('#destinationStation').val();
+            if (!(sourceId && destinationId && CITY)) return;
+            // here goes dijkstra
+        }
+
         $(document).ready(function () {
             var svg = $('#metro-map');
+
             var drawLineSvg = function (line) {
                 drawLine(svg, line)
             };
 
-            $.ajax('/backend/' + cityId).done(function (city) {
+            $.ajax('/backend/' + CITY_ID).done(function (city) {
                 console.log(city);
+                CITY = city;
                 //noinspection JSUnresolvedVariable
                 city.lines.forEach(drawLineSvg);
                 //noinspection JSJQueryEfficiency
                 $("body").html($("body").html());
-            });
 
+                $('#metro-map').find('circle').popover({
+                    container: 'body',
+                    trigger: 'focus',
+                    content: $('.popover-buttons').html(),
+                    html: true
+                }).on('shown.bs.popover', function () {
+                    var $this = $(this);
+                    var stationId = $this.data('stationId');
+                    var tip = $this.data('popover').$tip;
+                    tip.find('.add-source-button').click(function () {
+                        $('#sourceStation').val(stationId);
+                    });
+                    tip.find('.add-destination-button').click(function () {
+                        $('#destinationStation').val(stationId);
+                    });
+                });
+                $('.path-search-container select').change(findPath)
+            });
         })
     </script>
 {% endblock %}
 {% block content %}
     <svg id="metro-map" xmlns="http://www.w3.org/2000/svg"></svg>
-    <div id="search-container" role="form">
+    <div id="path-search-container" role="form">
         <div class="form-group">
             <label for="sourceStation" class="col-sm-2 control-label">Откуда</label>
             <select id="sourceStation" class="form-control">
@@ -104,6 +137,11 @@
                 {% endfor %}
             </select>
         </div>
-        <button type="submit" class="btn btn-default">Поехали</button>
+    </div>
+    <div class="popover-buttons" style="display: none">
+        <div class="btn-group">
+            <button class="btn btn-default add-source-button" type="button">Отсюда</button>
+            <button class="btn btn-default add-destination-button" type="button">Сюда</button>
+        </div>
     </div>
 {% endblock %}
