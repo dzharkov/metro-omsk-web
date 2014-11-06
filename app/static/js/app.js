@@ -42,10 +42,13 @@ $(document).ready(function() {
 
     var model = {
         data: null,
+        lineById: function(id) {
+            return _.find(this.data.lines, function(l) {return l.id == id;});
+        },
         loadData: function() {
             $.ajax('/backend/' + cityId).done(function(data) {
+                map.clearOverlays();
                 model.data = data;
-
 
                 for (var i in data.lines) {
                     var line = data.lines[i];
@@ -71,12 +74,30 @@ $(document).ready(function() {
             var form = modalDiv.find('form');
             form.find('.js-cancel').click(function() { modalDiv.modal('hide'); });
 
-            var lines = form.find('#lines');
+            var lines = form.find('#line');
             lines.html('');
 
+            var stations = form.find('#next_id');
+
+            function filterStations() {
+                var lineId = lines.find('option:selected').attr('value');
+                stations.html('');
+                var line = model.lineById(lineId);
+
+                _.each(line.stations, function(s) {
+                    stations.append($('<option>', { value: s.id, text: s.name }));
+                });
+
+                stations.append($('<option>', { value: '', text: 'Добавить последней' }));
+            }
+
+            lines.change(filterStations);
+
             _.each(model.data.lines, function(l) {
-               lines.append($('<option>'), { value: l.id });
+               lines.append($('<option>', { value: l.id, text: l.name }));
             });
+
+            filterStations();
 
             form.unbind('submit');
             form.submit(function(event) {
@@ -94,8 +115,6 @@ $(document).ready(function() {
         },
         items: {
             "add": {name: "Add station", icon: "add"}
-/*            "edit": {name: "Edit", icon: "edit"},
-            "delete": {name: "Delete", icon: "delete"}*/
         }
     });
 

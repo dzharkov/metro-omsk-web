@@ -7,12 +7,16 @@ def get_card(request, city_id):
     city = City.objects.get(id=city_id)
     return city.as_dict()
 
+
 @ajax_request
 def add_station(request):
     station = Station()
     station.name = request.POST['name']
     station.next_time = request.POST['next_time']
-    station.next_station = Station.objects.get(id=request.POST['next_id'])
+
+    if request.POST['next_id']:
+        station.next_station = Station.objects.get(id=request.POST['next_id'])
+
     station.lt_coord = request.POST['lat']
     station.ln_coord = request.POST['lan']
     station.x_coord = 0
