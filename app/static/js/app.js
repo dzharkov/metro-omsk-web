@@ -62,6 +62,7 @@ $(document).ready(function() {
                     strokeOpacity: 1,
                     map: map
                 });
+                overlayItems.push(line);
             });
         },
         loadData: function() {
