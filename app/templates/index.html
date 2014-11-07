@@ -23,6 +23,10 @@
             stroke-width: 2;
         }
 
+        circle.station-active {
+            stroke: #3f9aff;
+        }
+
         /*noinspection CssUnusedSymbol*/
         text.station-name {
             fill: black;
@@ -129,7 +133,7 @@
             // check if current text overlaps some station circle
             var boundingRect = textSVG.getBoundingClientRect();
             if (STATIONS.filter(function (s) {
-                return boundingRect.top < s.y && s.y < boundingRect.bottom
+                return boundingRect.top - CIRCLE_RADIUS / 2 < s.y && s.y < boundingRect.bottom + CIRCLE_RADIUS / 2
                         && boundingRect.left - CIRCLE_RADIUS * 1.5 < s.x && s.x < boundingRect.right;
             }).length > 1) {
                 this.svg.removeChild(textSVG);
