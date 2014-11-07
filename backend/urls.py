@@ -7,5 +7,6 @@ urlpatterns = patterns(
     url(r'^/edit_station/(?P<id>\d+)/?', 'edit_station'),
     url(r'^/delete_station/(?P<id>\d+)/?', 'delete_station'),
     url(r'^/update_coords/(?P<id>\d+)/?', 'update_coords'),
+    url(r'^/create_transition/?', 'create_transition'),
     url(r'^/?$', 'get_cities'),
 )

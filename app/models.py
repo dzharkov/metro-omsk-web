@@ -67,8 +67,8 @@ class Station(models.Model):
     next_station = models.OneToOneField('self', related_name="prev_station", null=True, blank=True, on_delete=SET_NULL)
     prev_time = models.IntegerField(null=True, blank=True)
     next_time = models.IntegerField(null=True, blank=True)
-    x_coord = models.FloatField()
-    y_coord = models.FloatField()
+    x_coord = models.FloatField(default=0, null=True)
+    y_coord = models.FloatField(default=0, null=True)
     lt_coord = models.FloatField(default=0)
     ln_coord = models.FloatField(default=0)
 

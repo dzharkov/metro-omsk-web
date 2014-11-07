@@ -49,6 +49,21 @@ $(document).ready(function() {
         lineById: function(id) {
             return _.find(this.data.lines, function(l) {return l.id == id;});
         },
+        coordsById: {},
+        drawTransitions: function() {
+            var lineSymbol = {
+                path: 'M 0,-1 0,1',
+                strokeOpacity: 1,
+                scale: 4
+            };
+            _.each(this.data.transitions, function(transition) {
+                var line = new google.maps.Polyline({
+                    path: [model.coordsById[transition.from_id], model.coordsById[transition.to_id]],
+                    strokeOpacity: 1,
+                    map: map
+                });
+            });
+        },
         loadData: function() {
             $.ajax('/backend/' + cityId).done(function(data) {
                 map.clearOverlays();
@@ -83,6 +98,22 @@ $(document).ready(function() {
                             );
                         });
 
+                        google.maps.event.addListener(marker, 'click', function(mouseEvent) {
+                            if (model.currentStationTransitionBeginId) {
+                                $.post('/backend/create_transition', {
+                                    id1: model.currentStationTransitionBeginId,
+                                    id2: station.id
+                                }).done(
+                                    function() {
+                                        model.loadData();
+                                    }
+                                );
+                                model.currentStationTransitionBeginId = undefined;
+                            }
+                        });
+
+                        model.coordsById[station.id.toString()] = myLatLng;
+
                         lineArray.push(myLatLng);
                     });
                     linePath = new google.maps.Polyline({
@@ -95,6 +126,7 @@ $(document).ready(function() {
                     overlayItems.push(linePath);
                     linePath.setMap(map);
                 });
+                model.drawTransitions();
             });
         },
         openStationForm: function(station) {
@@ -164,6 +196,9 @@ $(document).ready(function() {
             $.post(url).done(function() { model.loadData(); });
 
         },
+        initAddTransition: function() {
+            model.currentStationTransitionBeginId = model.currentStation.id;
+        },
         createLatLng: null
     };
 
@@ -184,13 +219,16 @@ $(document).ready(function() {
         callback: function(key, options) {
             if (key == "edit") {
                 model.openStationForm(model.currentStation);
-            } else {
+            } else if (key == "delete") {
                 model.removeStation(model.currentStation);
+            } else {
+                model.initAddTransition();
             }
         },
         items: {
             "edit": {name: "Edit", icon: "edit"},
-            "delete": {name: "Delete", icon: "delete"}
+            "delete": {name: "Delete", icon: "delete"},
+            "add_transition": {name: "Add transition", icon: "add"}
         }
     });
 

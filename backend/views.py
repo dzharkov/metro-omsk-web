@@ -1,5 +1,5 @@
 from annoying.decorators import ajax_request
-from app.models import City, Station, Line
+from app.models import City, Station, Line, Transition
 from django.views.decorators.csrf import csrf_exempt
 
 
@@ -92,5 +92,25 @@ def delete_station(request, id):
     if prev is not None:
         prev.next_station = next
         prev.save()
+
+    return {'result': 1}
+
+@csrf_exempt
+@ajax_request
+def create_transition(request):
+    station1 = Station.objects.get(id=request.POST['id1'])
+    station2 = Station.objects.get(id=request.POST['id2'])
+
+    transition = Transition()
+    transition.time = 300
+    transition.from_station = station1
+    transition.to_station = station2
+    transition.save()
+
+    transition = Transition()
+    transition.time = 300
+    transition.from_station = station2
+    transition.to_station = station1
+    transition.save()
 
     return {'result': 1}
