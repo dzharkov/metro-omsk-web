@@ -10,62 +10,81 @@
         }
 
         /*noinspection CssUnusedSymbol*/
-        .line {
+        polyline.line {
             fill: none;
             stroke-width: 3;
         }
 
         /*noinspection CssUnusedSymbol*/
-        .station {
+        circle.station {
             cursor: pointer;
             position: relative;
             outline: none;
+            stroke-width: 2;
+        }
+
+        /*noinspection CssUnusedSymbol*/
+        text.station-name {
+            fill: black;
         }
 
         #path-search-container {
             position: absolute;
-            right: 2em;
+            left: 2em;
             top: 2em
         }
 
         /*noinspection CssUnusedSymbol*/
-        .transition {
-            stroke: #743500;
+        line.transition {
             stroke-width: 4;
+            stroke: #973b00;
+        }
+
+        /*noinspection CssUnusedSymbol*/
+        .popover {
+            z-index: 1001;
+        }
+
+        /*noinspection CssUnusedSymbol*/
+        .tooltip {
+            z-index: 1000;
         }
     </style>
     <script type="application/javascript">
+        const SVG_NS = 'http://www.w3.org/2000/svg';
         const CITY_ID = parseInt({{ city.id }}) ? {{ city.id }} : -1;
-        const CIRCLE_RADIUS = 8;
+        const CIRCLE_RADIUS = 5;
         {#        const CITY = JSON.parse(decodeURIComponent('{{ city|jsonify }}'));#}
         var CITY = undefined;
         var STATIONS = undefined;
 
-        function toScreenCoordinates(a, svg) {
-            var multiplier = Math.min($(svg).height(), $(svg).width());
-            return Math.ceil(a * 0.8 * multiplier) + multiplier * 0.1
+        function drawLine(line) {
+            var lineSVG = document.createElementNS(SVG_NS, 'polyline');
+            lineSVG.classList.add('line');
+            lineSVG.style.stroke = line.color;
+            $(lineSVG).attr('points', line.stations.map(function (station) {
+                return station.x + ',' + station.y;
+            }).join(' '));
+            this.svg.appendChild(lineSVG);
         }
 
-        function drawLine(line) {
-            //noinspection JSUnresolvedVariable
-            this.svg.append($('<polyline>')
-                            .addClass('line')
-                            .attr('style', 'stroke:' + line.color)
-                            .attr('points', line.stations.map(function (station) {
-                                return station.x + ',' + station.y;
-                            }).join(' '))
-            );
+        function drawStations(line) {
             for (var i in line.stations) {
                 if (!line.stations.hasOwnProperty(i)) continue;
                 var station = line.stations[i];
-                var circle = $('<circle>').addClass('station').attr({
-                    style: 'stroke:' + line.color + ';fill: ' + line.color,
+                var stationSVG = document.createElementNS(SVG_NS, 'circle');
+                stationSVG.id = 'stationCircle' + station.id;
+                stationSVG.classList.add('station');
+                stationSVG.style.stroke = line.color;
+                stationSVG.style.fill = line.color;
+                stationSVG.dataset.title = station.name;
+                stationSVG.dataset.stationId = station.id;
+                $(stationSVG).attr({
                     cx: station.x,
                     cy: station.y,
-                    r: CIRCLE_RADIUS,
-                    'data-title': station.name,
-                    'data-station-id': station.id
+                    r: CIRCLE_RADIUS
                 });
+                this.svg.appendChild(stationSVG);
                 {#                $(circle).click(handler(station.id));#}
                 {#                circle = $('<image></image>').addClass('station').attr({#}
                 {#                    x: Math.ceil(station.x - 8),#}
@@ -74,7 +93,7 @@
                 {#                    height: 15,#}
                 {#                    'xlink:href': '{% static "img/omich.jpg" %}'#}
                 {#                });#}
-                this.svg.append(circle);
+                {#            }#}
             }
         }
 
@@ -82,39 +101,58 @@
             var stationFrom = STATIONS.filter(function (e) {
                 return e.id == transition.from_id
             })[0];
-            console.log(transition);
             var stationTo = STATIONS.filter(function (e) {
                 return e.id == transition.to_id
             })[0];
-            var line = $('<line>').attr({
+            var transitionSVG = document.createElementNS(SVG_NS, 'line');
+            transitionSVG.classList.add('transition');
+            $(transitionSVG).attr({
                 x1: stationFrom.x,
                 y1: stationFrom.y,
                 x2: stationTo.x,
                 y2: stationTo.y
-
-            }).addClass('transition');
-            this.svg.append(line);
+            });
+            this.svg.appendChild(transitionSVG);
         }
 
-        function drawText(station) {
-            var text = $('<text>' + station.name + '</text>').attr({
-                id: 'stationName' + station.id,
+        function drawTextOrTooltip(station) {
+            var textSVG = document.createElementNS(SVG_NS, 'text');
+            textSVG.id = 'stationName' + station.id;
+            textSVG.textContent = station.name;
+            textSVG.classList.add('station-name');
+            $(textSVG).attr({
                 x: station.x + CIRCLE_RADIUS * 1.5,
-                y: station.y + CIRCLE_RADIUS / 2,
-                style: 'fill: black'
+                y: station.y + CIRCLE_RADIUS / 2
             });
-            this.svg.append(text)
+            this.svg.appendChild(textSVG);
+
+            // check if current text overlaps some station circle
+            var boundingRect = textSVG.getBoundingClientRect();
+            if (STATIONS.filter(function (s) {
+                return boundingRect.top < s.y && s.y < boundingRect.bottom
+                        && boundingRect.left - CIRCLE_RADIUS * 1.5 < s.x && s.x < boundingRect.right;
+            }).length > 1) {
+                this.svg.removeChild(textSVG);
+                $('circle[data-station-id=' + station.id + ']').tooltip({
+                    container: 'body',
+                    placement: 'right',
+                    trigger: 'hover click'
+                });
+            }
         }
 
         function findPath() {
             var sourceId = $('#sourceStation').val(),
                     destinationId = $('#destinationStation').val();
-            if (!(sourceId && destinationId && CITY)) return;
+            if (!(sourceId && destinationId && CITY)) {
+                //noinspection UnnecessaryReturnStatementJS
+                return;
+            }
             // here goes dijkstra
         }
 
         $(document).ready(function () {
-            var svg = $('#metro-map');
+            var svg = document.getElementById('metro-map');
 
             $.ajax('/backend/' + CITY_ID).done(function (city) {
                 console.log(city);
@@ -123,19 +161,23 @@
                 STATIONS = _.flatten(city.lines.map(function (line) {
                     return line.stations;
                 }));
-                STATIONS.forEach(function (station) {
-                    station.x = toScreenCoordinates(station.x, svg);
-                    station.y = toScreenCoordinates(1 - station.y, svg);
-                });
+                (function () {
+                    var squareSize = Math.min($(svg).height(), $(svg).width());
+                    var margin = (Math.max($(svg).height(), $(svg).width()) - squareSize) / 2;
+                    var padding = squareSize * 0.1;
+                    var multiplier = squareSize * 0.8;
+                    STATIONS.forEach(function (station) {
+                        station.x = station.x * multiplier + padding + margin;
+                        station.y = (1 - station.y) * multiplier + padding;
+                    });
+                })();
 
-                city.transitions.forEach(_.bind(drawTransition, {svg: svg}));
                 city.lines.forEach(_.bind(drawLine, {svg: svg}));
-                STATIONS.forEach(_.bind(drawText, {svg: svg}));
+                city.transitions.forEach(_.bind(drawTransition, {svg: svg}));
+                city.lines.forEach(_.bind(drawStations, {svg: svg}));
+                STATIONS.forEach(_.bind(drawTextOrTooltip, {svg: svg}));
 
-                //noinspection JSJQueryEfficiency
-                $("body").html($("body").html());
-
-                $('#metro-map').find('circle').popover({
+                $('#metro-map').find('circle[data-station-id]').popover({
                     container: 'body',
                     trigger: 'focus',
                     content: $('.popover-buttons').html(),
@@ -145,6 +187,7 @@
                     var $this = $(this);
                     var stationId = $this.data('stationId');
                     var tip = $this.data('popover').$tip;
+                    if (!tip) return;
                     tip.find('.add-source-button').click(function () {
                         $('#sourceStation').val(stationId);
                     });
