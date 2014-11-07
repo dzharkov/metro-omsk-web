@@ -1,5 +1,5 @@
 from annoying.decorators import render_to
-from app.models import City
+from app.models import City, Station
 
 
 @render_to('edit_map.html')

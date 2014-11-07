@@ -1,6 +1,6 @@
 from django.db import models
 from django.db.models import SET_NULL
-
+from django.db.models.signals import post_save
 
 def as_dict(o):
     return o.as_dict()
@@ -10,10 +10,16 @@ def array_as_dict(a):
     return list(map(lambda x: x.as_dict(), a))
 
 
+MAX_ABS_COORDS = 400
+
 class City(models.Model):
     name = models.CharField(max_length=100)
     lt_coord = models.FloatField(default=0)
     ln_coord = models.FloatField(default=0)
+    top_coord = models.FloatField(default=MAX_ABS_COORDS)
+    bottom_coord = models.FloatField(default=-MAX_ABS_COORDS)
+    left_coord = models.FloatField(default=MAX_ABS_COORDS)
+    right_coord = models.FloatField(default=-MAX_ABS_COORDS)
 
     def __unicode__(self):
         return self.name
@@ -67,8 +73,6 @@ class Station(models.Model):
     next_station = models.OneToOneField('self', related_name="prev_station", null=True, blank=True, on_delete=SET_NULL)
     prev_time = models.IntegerField(null=True, blank=True)
     next_time = models.IntegerField(null=True, blank=True)
-    x_coord = models.FloatField(default=0, null=True)
-    y_coord = models.FloatField(default=0, null=True)
     lt_coord = models.FloatField(default=0)
     ln_coord = models.FloatField(default=0)
 
@@ -88,27 +92,40 @@ class Station(models.Model):
             'lng': self.ln_coord
         }
 
-    def save(self, **kwargs):
-        super(Station, self).save(kwargs)
-        stations = Station.objects.filter(line__city=self.line.city)
+    def update_bounding_rect(self, city):
+        city.top_coord = min(city.top_coord, float(self.lt_coord))
+        city.bottom_coord = max(city.bottom_coord, float(self.lt_coord))
+        city.left_coord = min(city.left_coord, float(self.ln_coord))
+        city.right_coord = max(city.right_coord, float(self.ln_coord))
 
-        lt_comparator = lambda a: a.lt_coord
-        lg_comparator = lambda a: a.ln_coord
+    def update_city_bounding_rect(self):
+        city = self.line.city
+        self.update_bounding_rect(city)
+        city.save()
 
-        top = min(stations, key=lt_comparator).lt_coord
-        bottom = max(stations, key=lt_comparator).lt_coord
-        left = min(stations, key=lg_comparator).ln_coord
-        right = max(stations, key=lg_comparator).ln_coord
+    @property
+    def x_coord(self):
+        city = self.line.city
+        delta_x = city.right_coord - city.left_coord
+        if delta_x == 0:
+            return 0
+        return (self.ln_coord - city.left_coord) / delta_x
 
-        delta_x, delta_y = right - left, bottom - top
+    @property
+    def y_coord(self):
+        city = self.line.city
+        delta_y = city.bottom_coord - city.top_coord
+        if delta_y == 0:
+            return 0
+        return (self.lt_coord - city.top_coord) / delta_y
 
-        if delta_x == 0 or delta_y  == 0:
-            return
 
-        for station in stations:
-            station.x_coord, station.y_coord = (station.ln_coord - left) / delta_x, (station.lt_coord - top) / delta_y
-            super(Station, station).save()
+def update_br(sender, instance, *args, **kwards):
+    if sender == Station:
+        #pass
+        instance.update_city_bounding_rect()
 
+post_save.connect(update_br)
 
 class Transition(models.Model):
     from_station = models.ForeignKey(Station, related_name='transitions', null=False, blank=False)

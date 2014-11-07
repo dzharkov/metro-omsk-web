@@ -18,8 +18,6 @@ def update_station(station, request):
 
     station.lt_coord = request.POST['lt']
     station.ln_coord = request.POST['ln']
-    station.x_coord = 0
-    station.y_coord = 0
 
     if request.POST['next_id']:
         next_station = Station.objects.get(id=request.POST['next_id'])
