@@ -131,7 +131,7 @@
             // check if current text overlaps some station circle
             var boundingRect = textSVG.getBoundingClientRect();
             if (STATIONS.filter(function (s) {
-                return boundingRect.top - CIRCLE_RADIUS / 2 < s.y && s.y < boundingRect.bottom + CIRCLE_RADIUS / 2
+                return boundingRect.top - CIRCLE_RADIUS <= s.y && s.y <= boundingRect.bottom + CIRCLE_RADIUS
                         && boundingRect.left - CIRCLE_RADIUS * 1.5 < s.x && s.x < boundingRect.right;
             }).length > 1) {
                 this.svg.removeChild(textSVG);
