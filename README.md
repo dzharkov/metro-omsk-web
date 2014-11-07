@@ -12,3 +12,5 @@ Home assignments for computational geometry course
 
 ## Running
   python manage.py migrate
+
+
