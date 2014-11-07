@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Simple icons{% endblock %}
+{% block title %}Omsk metro edit{% endblock %}
 {% block additional_head %}
     {% load staticfiles %}
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDQpdKHgY0iS3w9nTE6F5625LwZi2zBFY0&v=3.exp"></script>
@@ -38,7 +38,6 @@
 
                     <div class="controls">
                         <select id="line" name="line">
-                            <option value="1">Красная</option>
                         </select>
                     </div>
                 </div>
@@ -56,6 +55,13 @@
 
                     <div class="controls">
                         <input type="text" id="next_time" name="next_time">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="prev_time">Время переезда до предыдущей</label>
+
+                    <div class="controls">
+                        <input type="text" id="prev_time" name="prev_time">
                     </div>
                 </div>
                 <div class="control-group">

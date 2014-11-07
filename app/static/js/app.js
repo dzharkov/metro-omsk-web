@@ -138,11 +138,21 @@ $(document).ready(function() {
             form.find('.js-cancel').click(function() { modalDiv.modal('hide'); });
             form.find('#name').val( station.name || '');
             form.find('#next_time').val( station.next_time || '');
+            form.find('#prev_time').val( station.prev_time || '');
 
             var lines = form.find('#line');
+            var linesBlock = lines.parent().parent();
             lines.html('');
 
             var stations = form.find('#next_id');
+            var stationsBlock = stations.parent().parent();
+            if (station.id) {
+                stationsBlock.hide();
+                linesBlock.hide();
+            } else {
+                stationsBlock.show();
+                linesBlock.show();
+            }
 
             function filterStations() {
                 var lineId = lines.find('option:selected').attr('value');
@@ -150,13 +160,22 @@ $(document).ready(function() {
                 var line = model.lineById(lineId);
 
                 stations.append($('<option>', { value: '', text: 'Добавить последней' }));
-                _.each(line.stations, function(s) {
-                    var desc = { value: s.id, text: s.name };
+
+                for (var i in line.stations) {
+                    var s = line.stations[i];
+                    var text = "Перед с." + s.name;
+                    if (i > 0) {
+                        var prev = line.stations[i - 1];
+                        text = "Переезд " + prev.name + "/" + s.name;
+                    }
+
+                    var desc = { value: s.id, text: text };
+
                     if (station.next_station_id == s.id) {
                         desc.selected = "selected";
                     }
                     stations.append($('<option>', desc));
-                });
+                }
             }
 
             lines.change(filterStations);

@@ -16,6 +16,9 @@ def update_station(station, request):
     if request.POST['next_time']:
         station.next_time = request.POST['next_time']
 
+    if request.POST['next_time']:
+        station.prev_time = request.POST['prev_time']
+
     station.lt_coord = request.POST['lt']
     station.ln_coord = request.POST['ln']
 
