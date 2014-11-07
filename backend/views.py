@@ -76,6 +76,8 @@ def get_cities(request):
         cities.append({
             'id': city.id,
             'name': city.name,
+            'lt_coord': city.lt_coord,
+            'ln_coord': city.ln_coord
         })
 
     return {'cities': cities}
